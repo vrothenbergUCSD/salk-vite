@@ -4,7 +4,7 @@ import Home from "../views/Home.vue"
 //import Data from "../views/Data.vue"
 //import Login from "../views/Login.vue"
 import Graph from "../views/Graph.vue"
-//import Test from "../views/Test.vue"
+import Test from "../views/Test.vue"
 //import firebase from "firebase/app";
 //import "firebase/auth";
 
@@ -47,7 +47,6 @@ const routes = [
       requiresAuth: false,
     },
   },
-  /*/
   {
     path: "/test",
     name: "Test",
@@ -57,7 +56,7 @@ const routes = [
       requiresAuth: false,
     },
   },
-  */
+  
   
 ];
 
