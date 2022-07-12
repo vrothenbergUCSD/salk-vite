@@ -8,8 +8,12 @@ import http from "../http-common";
 
 
 class DataService {
-  getAllSampleMetadata() {
+  async getAllSampleMetadata() {
     return http.get("/samples_metadata");
+  }
+  async getExpressionData(hi=1000, lo=500, limit) {
+    //http://127.0.0.1:8000/expression_data_by_gene_expression/50000?limit=5
+    return http.get(`/expression_data/${limit}?hi=${hi}&lo=${lo}`)
   }
   // getAllSampleMetadata = async () => {
   //   return axios.get("/samples_metadata");

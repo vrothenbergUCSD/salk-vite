@@ -5,6 +5,7 @@ import Home from "../views/Home.vue"
 //import Login from "../views/Login.vue"
 import Graph from "../views/Graph.vue"
 import Test from "../views/Test.vue"
+import Main from "../views/Main.vue"
 //import firebase from "firebase/app";
 //import "firebase/auth";
 
@@ -19,25 +20,15 @@ const routes = [
       requiresAuth: false,
     },
   },
-  /*
   {
-    path: "/data",
-    name: "Data",
-    component: Data,
+    path: "/main",
+    name: "Main",
+    component: Main,
     meta: {
-      title: "Data",
+      title: "Main",
       requiresAuth: false,
     },
   },
-  {
-    path: "/login",
-    name: "Login",
-    component: Login,
-    meta: {
-      title: "Login",
-      requiresAuth: false,
-    },
-  },*/
   {
     path: "/graph",
     name: "Graph",
