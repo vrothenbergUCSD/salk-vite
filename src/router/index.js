@@ -19,6 +19,7 @@ const routes = [
       title: "Home",
       requiresAuth: false,
     },
+    current: true,
   },
   {
     path: "/main",
@@ -28,6 +29,7 @@ const routes = [
       title: "Main",
       requiresAuth: false,
     },
+    current: false,
   },
   {
     path: "/graph",
@@ -37,6 +39,7 @@ const routes = [
       title: "Graph",
       requiresAuth: false,
     },
+    current: false,
   },
   {
     path: "/test",
@@ -46,6 +49,7 @@ const routes = [
       title: "Test",
       requiresAuth: false,
     },
+    current: false,
   },
   
   
@@ -56,6 +60,7 @@ const router = createRouter({
   // 4. Provide the history implementation to use. We are using the hash history for simplicity here.
   history: createWebHistory('/'),
   routes, // short for `routes: routes`
+  linkActiveClass: 'text-white bg-gray-900'
 })
 
 

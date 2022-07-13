@@ -15,6 +15,10 @@ class DataService {
     //http://127.0.0.1:8000/expression_data_by_gene_expression/50000?limit=5
     return http.get(`/expression_data/${limit}?hi=${hi}&lo=${lo}`)
   }
+  async getExpressionDataByGenes(genes) {
+    //http://127.0.0.1:8000/expression_data_by_genes/0610009B22Rik,Agrn
+    return http.get(`/expression_data_by_genes/${genes}`)
+  }
   // getAllSampleMetadata = async () => {
   //   return axios.get("/samples_metadata");
   // }

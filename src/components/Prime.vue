@@ -128,4 +128,3 @@ export default {
   }
 }
 </script>
-PrimeVue 3.15.0 on Vue 3 by PrimeTek

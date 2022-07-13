@@ -1,8 +1,7 @@
 <template>
   <div class="w-full">
-    <Dropdown v-model="selected" :options="this.rows" optionLabel="name" :placeholder="this.placeholder" class="w-10 text-left" />
+    <Dropdown v-model="selected" :options="this.rows" optionLabel="name" :placeholder="this.placeholder" @change="joo" class="w-10 text-left" />
   </div>
-  
 </template>
 
 <script>
@@ -33,6 +32,9 @@ export default {
   mounted() {
   },
   methods: {
+    joo() {
+      console.log("joo")
+    }
 
   }
 
