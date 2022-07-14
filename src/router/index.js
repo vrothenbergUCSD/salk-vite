@@ -1,4 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
+import Home from "../views/Home.vue"
+//import Data from "../views/Data.vue"
+//import Login from "../views/Login.vue"
+import Graph from "../views/Graph.vue"
+import Test from "../views/Test.vue"
+import Main from "../views/Main.vue"
 //import firebase from "firebase/app";
 //import "firebase/auth";
 
@@ -7,38 +14,42 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: () => import('@/views/Home.vue'),
+    component: Home,
     meta: {
       title: "Home",
       requiresAuth: false,
     },
+    current: true,
   },
   {
     path: "/main",
     name: "Main",
-    component: () => import('@/views/Main.vue'),
+    component: Main,
     meta: {
       title: "Main",
       requiresAuth: false,
     },
+    current: false,
   },
   {
     path: "/graph",
     name: "Graph",
-    component: () => import('@/views/Graph.vue'),
+    component: Graph,
     meta: {
       title: "Graph",
       requiresAuth: false,
     },
+    current: false,
   },
   {
     path: "/test",
     name: "Test",
-    component: () => import('@/views/Test.vue'),
+    component: Test,
     meta: {
       title: "Test",
       requiresAuth: false,
     },
+    current: false,
   },
   
   
@@ -61,4 +72,3 @@ router.beforeEach((to, from, next) => {
 export {
   router,
 }
-
