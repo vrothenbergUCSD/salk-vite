@@ -332,12 +332,17 @@ export default {
       console.log('sumstat: ')
       console.log(sumstat)  
       console.log('sumstat_map')
-      const sumstat_map = this.dataset.map((d,i) => ({
-        key:`${d.gene_name}_${d.group_name}`,
+      const sumstat_arr = this.dataset.map((d,i) => [
+        `${d.gene_name}_${d.group_name}_${d.time_point}`,{
         time_point: d.time_point,
         gene_expression: d.gene_expression,
+        gene_group: `${d.gene_name}_${d.group_name}`,
         i: i,
-        }))
+        }]
+      )
+      console.log(sumstat_arr)
+      const sumstat_map = new Map(sumstat_arr)
+      console.log('sumstat_map')
       console.log(sumstat_map)
       
       var color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -399,47 +404,6 @@ export default {
                 .remove()
             }
           )
-
-      // // Logic for plotting lines
-      // this.svg.selectAll(".line")
-      //     .data(sumstat)
-      //     .join(
-      //       function(enter) {
-      //         enter.append('path')
-      //           .attr('class', 'line')
-      //           .attr("d", (d) => d3.line()
-      //               .curve(d3.curveNatural)
-      //               .x((d) => x(d.time_point))
-      //               .y((d) => y(+d.gene_expression))
-      //               (d[1])
-      //           )
-      //           .attr("fill", "none")
-      //           .attr("stroke-width", 1.5)
-      //           .attr("stroke", (d) => color(d[0]))
-              
-      //         enter.append('g')
-
-      //       },
-      //       (update) => {
-      //         update
-      //           .transition()
-      //           .duration(500)
-      //           .attr("d", (d) => d3.line()
-      //               .curve(d3.curveNatural)
-      //               .x((d) => x(d.time_point))
-      //               .y((d) => y(+d.gene_expression))
-      //               (d[1]))
-      //           .attr('stroke', (d) => color(d[0]))
-      //       },
-      //       (exit) => {
-      //         exit  
-      //           .style('stroke-opacity', 0)
-      //           .transition()
-      //           .ease(Math.sqrt)
-      //           .duration(updateInterval)
-      //           .remove()
-      //       }
-      //     )
       
       // Legend color
       var legendX = this.width*this.drawable_width_scale+20
@@ -477,6 +441,8 @@ export default {
           .data(sumstat)
           .join(
             (enter) => {
+              console.log('legendText enter')
+              console.log(enter)
               enter.append('text')
                 .attr('class', 'legendText')
                 .attr('x', legendX+20)
@@ -502,41 +468,54 @@ export default {
 
             }
           )
-      
-      // // Data points
-      // this.svg
-      //   // First we need to enter in a group
-      //   .selectAll("myDots")
-      //   .data(sumstat)
-      //   .join('g')
-      //     .style("fill", d => color(d[0]))
-      //   // Second we need to enter in the 'values' part of this group
-      //   .selectAll("myPoints")
-      //   .data(d => d[1])
-      //   .join("circle")
-      //     .attr("cx", d => x(d.time_point))
-      //     .attr("cy", d => y(+d.gene_expression))
-      //     .attr("r", 2)
-      //     .attr("stroke", "white")
-
-      // This is the experiment with voronoi
+    
       // Draw dots on points
       this.svg.selectAll(".dot")
-        //i am using the raw data array, NOT the nested array
+        // Flattened sumstat array with gene_group keys
         .data(sumstat_map)
-        .enter()
-        .append("circle")
-        .attr("class", (d,i) => i)
-        .style("fill", d => color(d.key))
-        //.style("stroke-width", "3px")
-        //.style("stroke", d => color(d.key))
-        .attr("cx", d => x(d.time_point))
-        .attr("cy", d => y(d.gene_expression))
-        .attr("r", 2)
+        .join(
+          (enter) => {
+            console.log('dots enter')
+            console.log(enter)
+            enter.append("circle")
+              .attr("class", "dot")
+              .style("fill", d => color(d[1].gene_group))
+              //.style("stroke-width", "3px")
+              //.style("stroke", d => color(d.key))
+              .attr("cx", d => x(d[1].time_point))
+              .attr("cy", d => y(d[1].gene_expression))
+              .attr("r", 2)
+              .transition()
+              .ease(Math.sqrt)
+              .duration(updateInterval)
+              .style('fill-opacity', 1)
+          },
+          (update) => {
+            //update
+            console.log('dots update')
+            console.log(update)
+            update.attr('cx', d => x(d[1].time_point))
+              .attr('cy', d => y(d[1].gene_expression))
+              .style('fill', d => color(d[1].gene_group))
+              .transition()
+              .ease(Math.sqrt)
+              .duration(updateInterval)
+          },
+          (exit) => {
+            console.log('dots exit')
+            console.log(exit)
+            exit.transition()
+              .ease(Math.sqrt)
+              .duration(updateInterval)
+              .style('fill-opacity', 0)
+              .remove()
+          }
+        )
+        
 
       // Voronoi cells to select nearest point
       var voronoi = d3.Delaunay
-        .from(sumstat_map, d => x(d.time_point), d => y(d.gene_expression))
+        .from(sumstat_map, d => x(d[1].time_point), d => y(d[1].gene_expression))
         .voronoi([0, 0, this.width * this.drawable_width_scale, this.height])
 
       //Create the voronoi grid
@@ -544,34 +523,41 @@ export default {
         .attr("class", "voronoiWrapper")
         .selectAll("path")
         .data(sumstat_map)
-        .enter()
-        .append("path")
-        .attr("opacity", 0.5)
-        //.attr("stroke", "#ff1493") // Hide overlay
-        .attr("fill", "none")
-        .style("pointer-events", "all")
-        .attr("d", (d, i) => voronoi.renderCell(i))
-        .on("mouseover", (d,i) => {
-          if (d.y > 1) {
-            console.log('d.y > 1')
-            console.log(d.y)
-            console.log(i)
-            this.svg.append('g')
-              .attr('class', 'tooltip')
-              .attr("transform", `translate(${x(i.time_point)},${y(i.gene_expression)})`)
-              .call(popover, `${i.key} 
-              Time Point: ZT${i.time_point}
-              Avg Expression: ${Math.round(i.gene_expression*100)/100}`, i.key)
-          }
-        })
-        .on("mouseout", () => this.svg.selectAll('.tooltip').remove());
-           
-      // var mouseLine = this.svg.append('path')
-      //       .attr('class', 'mouse-line')
-      //       .attr('stroke', '#303030')
-      //       .attr('stroke-width', '2')
-      //       .attr('opacity', 0)
+        .join(
+          (enter) => {
+            enter.append("path")
+            .attr("opacity", 0.5)
+            //.attr("stroke", "#ff1493") // Hide overlay
+            .attr("fill", "none")
+            .style("pointer-events", "all")
+            .attr("d", (d, i) => voronoi.renderCell(i))
+            .on("mouseover", (d,i) => {
+              console.log('mouseover')
+              console.log(d)
+              console.log(i)
+              if (d.y > 1) {
+                console.log('d.y > 1')
+                console.log(d.y)
+                console.log(i)
+                this.svg.append('g')
+                  .attr('class', 'tooltip')
+                  .attr("transform", `translate(${x(i[1].time_point)},${y(i[1].gene_expression)})`)
+                  .call(popover, `${i[1].gene_group} 
+                  Time: ZT${i[1].time_point} 
+                  Expr: ${Math.round(i[1].gene_expression)}`, i[1].gene_group)
+              }
+            })
+            .on("mouseout", () => this.svg.selectAll('.tooltip').remove());
+          },
+          (update) => {
 
+          },
+          (exit) => {
+            exit.remove()
+
+          }
+        )
+           
       function popover(g, value, key) {
         if (!value) return g.style("display", "none");
 
@@ -586,7 +572,7 @@ export default {
           .data([null])
           .join("path")
             .attr("fill", "white")
-            .attr("fill-opacity", 0.5)
+            .attr("fill-opacity", 1)
             .attr("stroke", color(key));
 
         // tooltip content
