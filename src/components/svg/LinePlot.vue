@@ -327,14 +327,18 @@ export default {
         this.dataset = []
       }
 
-      const sumstat = d3.group(this.dataset, d => `${d.gene_name}_${d.group_name}`);
+      const sumstat = d3
+        .group(this.dataset, d => `${d.gene_name}_${d.group_name}`);
       console.log('sumstat: ')
       console.log(sumstat)  
-      // const sumstat_arr = Array.from(sumstat.entries())
-      // const num_groups = sumstat_arr.length 
-      // const zt_values = sumstat_arr[0][1].map(a => a.time_point)
-
-      
+      console.log('sumstat_map')
+      const sumstat_map = this.dataset.map((d,i) => ({
+        key:`${d.gene_name}_${d.group_name}`,
+        time_point: d.time_point,
+        gene_expression: d.gene_expression,
+        i: i,
+        }))
+      console.log(sumstat_map)
       
       var color = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -395,6 +399,47 @@ export default {
                 .remove()
             }
           )
+
+      // // Logic for plotting lines
+      // this.svg.selectAll(".line")
+      //     .data(sumstat)
+      //     .join(
+      //       function(enter) {
+      //         enter.append('path')
+      //           .attr('class', 'line')
+      //           .attr("d", (d) => d3.line()
+      //               .curve(d3.curveNatural)
+      //               .x((d) => x(d.time_point))
+      //               .y((d) => y(+d.gene_expression))
+      //               (d[1])
+      //           )
+      //           .attr("fill", "none")
+      //           .attr("stroke-width", 1.5)
+      //           .attr("stroke", (d) => color(d[0]))
+              
+      //         enter.append('g')
+
+      //       },
+      //       (update) => {
+      //         update
+      //           .transition()
+      //           .duration(500)
+      //           .attr("d", (d) => d3.line()
+      //               .curve(d3.curveNatural)
+      //               .x((d) => x(d.time_point))
+      //               .y((d) => y(+d.gene_expression))
+      //               (d[1]))
+      //           .attr('stroke', (d) => color(d[0]))
+      //       },
+      //       (exit) => {
+      //         exit  
+      //           .style('stroke-opacity', 0)
+      //           .transition()
+      //           .ease(Math.sqrt)
+      //           .duration(updateInterval)
+      //           .remove()
+      //       }
+      //     )
       
       // Legend color
       var legendX = this.width*this.drawable_width_scale+20
@@ -458,40 +503,120 @@ export default {
             }
           )
       
-      // Data points
-      this.svg
-        // First we need to enter in a group
-        .selectAll("myDots")
-        .data(sumstat)
-        .join('g')
-          .style("fill", d => {color(d[0])})
-        // Second we need to enter in the 'values' part of this group
-        .selectAll("myPoints")
-        .data(d => d[1])
-        .join("circle")
-          .style('fill', )
-          .attr("cx", d => x(d.time_point))
-          .attr("cy", d => y(+d.gene_expression))
-          .attr("r", 2)
-          .attr("stroke", "white")
+      // // Data points
+      // this.svg
+      //   // First we need to enter in a group
+      //   .selectAll("myDots")
+      //   .data(sumstat)
+      //   .join('g')
+      //     .style("fill", d => color(d[0]))
+      //   // Second we need to enter in the 'values' part of this group
+      //   .selectAll("myPoints")
+      //   .data(d => d[1])
+      //   .join("circle")
+      //     .attr("cx", d => x(d.time_point))
+      //     .attr("cy", d => y(+d.gene_expression))
+      //     .attr("r", 2)
+      //     .attr("stroke", "white")
 
-      console.log('down here')
+      // This is the experiment with voronoi
+      // Draw dots on points
+      this.svg.selectAll(".dot")
+        //i am using the raw data array, NOT the nested array
+        .data(sumstat_map)
+        .enter()
+        .append("circle")
+        .attr("class", (d,i) => i)
+        .style("fill", d => color(d.key))
+        //.style("stroke-width", "3px")
+        //.style("stroke", d => color(d.key))
+        .attr("cx", d => x(d.time_point))
+        .attr("cy", d => y(d.gene_expression))
+        .attr("r", 2)
 
+      // Voronoi cells to select nearest point
+      var voronoi = d3.Delaunay
+        .from(sumstat_map, d => x(d.time_point), d => y(d.gene_expression))
+        .voronoi([0, 0, this.width * this.drawable_width_scale, this.height])
 
+      //Create the voronoi grid
+      this.svg.append("g")
+        .attr("class", "voronoiWrapper")
+        .selectAll("path")
+        .data(sumstat_map)
+        .enter()
+        .append("path")
+        .attr("opacity", 0.5)
+        //.attr("stroke", "#ff1493") // Hide overlay
+        .attr("fill", "none")
+        .style("pointer-events", "all")
+        .attr("d", (d, i) => voronoi.renderCell(i))
+        .on("mouseover", (d,i) => {
+          if (d.y > 1) {
+            console.log('d.y > 1')
+            console.log(d.y)
+            console.log(i)
+            this.svg.append('g')
+              .attr('class', 'tooltip')
+              .attr("transform", `translate(${x(i.time_point)},${y(i.gene_expression)})`)
+              .call(popover, `${i.key} 
+              Time Point: ZT${i.time_point}
+              Avg Expression: ${Math.round(i.gene_expression*100)/100}`, i.key)
+          }
+        })
+        .on("mouseout", () => this.svg.selectAll('.tooltip').remove());
+           
+      // var mouseLine = this.svg.append('path')
+      //       .attr('class', 'mouse-line')
+      //       .attr('stroke', '#303030')
+      //       .attr('stroke-width', '2')
+      //       .attr('opacity', 0)
 
-      // // Focus line
-      // this.svg.selectAll('.focusLine')
-      //     .append('g')
-      //     .append('line')
-      //     .attr('class', 'focusLine')
-      //     .attr('x1', x(0))
-      //     .attr('x2', x(0))
-      //     .attr('y1', 0)
-      //     .attr('y2', this.height)
-      //     .style('stroke-width', 1.5)
-      //     .style('stroke', 'black')
-      //     .style('fill', 'none')
-      //     .style('opacity', 0)
+      function popover(g, value, key) {
+        if (!value) return g.style("display", "none");
+
+        // tooltip group
+        g
+          .style("display", null)
+          .style("pointer-events", "none")
+          .style("font", "10px sans-serif");
+
+        // tooltip container stroke
+        const path = g.selectAll("path")
+          .data([null])
+          .join("path")
+            .attr("fill", "white")
+            .attr("fill-opacity", 0.5)
+            .attr("stroke", color(key));
+
+        // tooltip content
+        const text = g.selectAll("text")
+          .data([null])
+          .join("text")
+          .call(text => text
+            .selectAll("tspan")
+            .data((value + "").split(/\n/))
+            .join("tspan")
+              .attr("x", 0)
+              .attr("y", (d, i) => `${i * 1.1}em`)
+              .style("text-align", "center")
+              .style("font-weight", (_, i) => i ? null : "bold")
+              .text(d => d));
+
+        // tooltip positioning
+        const {x, y, width: w, height: h} = text.node().getBBox();
+        text.attr("transform", `translate(${-w / 2},${15 - y})`);
+        
+        // tooltip container path
+        path.attr("d", `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`);
+      }
+
+      
+      // // create focus chart
+      // var focus = svg
+      //   .append("g")
+      //   .attr("class", "focus")
+      //   .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
       // // Tooltip 
       // var tooltip = d3.select('#plot-area')
@@ -506,7 +631,7 @@ export default {
       //   .node()
 
       // // Mouse sensor rect
-      // this.svg.append('mouseRect')
+      // this.svg.append('rect')
       //     .style('fill', 'none')
       //     .style('pointer-events', 'all')
       //     .attr('width', this.width*this.drawable_width_scale)
@@ -515,48 +640,28 @@ export default {
       //     .on('mousemove', mousemove)
       //     .on('mouseout', mouseout)
 
+      // var tooltip = d3.select("#plot-area")
+      //     .append('div')
+      //     .attr("id", "tooltip")
+      //     .style("position", "absolute")
+      //     .style("visibility", "hidden")
+      //     .style("background-color", "white")
+      //     .style("border", "solid")
+      //     .style("border-width", "1px")
+      //     .style("border-radius", "5px")
+      //     .style("padding", "10px")
+      //     .html("<p>Hello</p>")
+
       // // Delaunay nearest data point search
       // // delaunay = d3.Delaunay.from(sumstat, d => x(d.time_point), d => y(d.gene_expression))
       // // console.log('delaunay')
       // // console.log(delaunay)
 
-      // function mouseover() {
-      //   //this.svg.selectAll('')
-      // }
 
-      // function mousemove() {
-      //   // Recover coordinates 
-      //   let mx = x.invert(d3.pointer())[0]
-      //   let my = x.invert(d3.pointer())[1]
-
-      //   console.log(mx + ',' + my)
-
-      //   //let i = d3.bisect()
-      //   const xRatio = mx / this.width;
-
-      //   d3.select(tooltip)
-      //     .style('display', 'block')
-      //     .style(
-      //       'left',
-      //       `${xRatio > 0.75 ? mx - 200 : xRatio < 0.15 ? mx + 50 : mx - 50}px`
-      //     )
-      //     .style('top', `${my + 30}px`).html(`<div>
-      //      <strong>${hover['Manufacturer ']} ${hover['Series ']}</strong>
-      //      </div>
-      //      <div class="flex">
-      //       <div>Size</div><div>${hover['Size ']}</div>
-      //      </div>
-      //      <div class="flex">
-      //       <div>Price</div><div>${ft(hover.price)}</div>
-      //      </div>
-      //      <div class="flex">
-      //       <div>Price per 128GB</div><div>${ft(hover.price_gb)}</div>
-      //      </div>`);
-        
-      // }
 
       // function mouseout() {
       //   console.log('mouseout')
+      //   //tooltip.style('visibility', 'hidden')
       // }
 
 
@@ -584,6 +689,7 @@ export default {
       // function mouseleft () {
       //   d3.select(tooltip).style('display', 'none');
       // }
+
           
     },
     async display_data() {
@@ -599,7 +705,8 @@ export default {
       
       //genes = genes.toString()
       //console.log(genes)
-      let data = await DataService.getExpressionDataByGenes(this.genesData.toString())
+      let data = await DataService
+        .getExpressionDataByGenes(this.genesData.toString())
       this.dataset = data
       console.log('data.data:')
       console.log(data.data)
